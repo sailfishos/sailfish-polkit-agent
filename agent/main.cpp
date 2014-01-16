@@ -17,14 +17,18 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************/
 
+#include "listener.h"
+
 #include <QCoreApplication>
-
-#define POLKIT_AGENT_I_KNOW_API_IS_SUBJECT_TO_CHANGE 1
-
-#include "pkagentexample.h"
+#include <PolkitQt1/Subject>
 
 int main(int argc, char *argv[])
 {
-    PkAgentExample example(argc, argv);
-    return example.exec();
+    QCoreApplication app(argc, argv);
+
+    SailfishPolKitAgentListener listener;
+    PolkitQt1::UnixSessionSubject session(getsid(0));
+    listener.registerListener(session, "/org/sailfishos/PolicyKit1/AuthenticationAgent");
+
+    return app.exec();
 }

@@ -25,4 +25,5 @@ make install INSTALL_ROOT=%{buildroot}
 
 %files
 %defattr(-,root,root,-)
-/usr/bin/%{name}
+%{_bindir}/%{name}
+%attr(4755,root,root) %{_libexecdir}/%{name}-helper

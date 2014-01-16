@@ -18,8 +18,8 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef POLKIT_QT_AGENT_KDE_LISTENER_H
-#define POLKIT_QT_AGENT_KDE_LISTENER_H
+#ifndef SAILFISH_POLKIT_AGENT_LISTENER_H
+#define SAILFISH_POLKIT_AGENT_LISTENER_H
 
 #include <QObject>
 #include <QString>
@@ -30,13 +30,15 @@
 #include <PolkitQt1/Agent/Session>
 
 
-class KListener : public PolkitQt1::Agent::Listener
+class SailfishPolKitAgentListener : public PolkitQt1::Agent::Listener
 {
     Q_OBJECT
-    Q_DISABLE_COPY(KListener)
+    Q_DISABLE_COPY(SailfishPolKitAgentListener)
+
 public:
-    KListener(QObject *parent = 0);
-    ~KListener() {};
+    SailfishPolKitAgentListener(QObject *parent = 0);
+    ~SailfishPolKitAgentListener();
+
 public Q_SLOTS:
     void initiateAuthentication(const QString &actionId,
                                 const QString &message,
@@ -45,13 +47,9 @@ public Q_SLOTS:
                                 const QString &cookie,
                                 const PolkitQt1::Identity::List &identities,
                                 PolkitQt1::Agent::AsyncResult *result);
-    bool initiateAuthenticationFinish();
-    void cancelAuthentication();
 
-    void request(const QString &request, bool echo);
-    void completed(bool gainedAuthorization);
-    void showError(const QString &text);
-    void showInfo(const QString &text);
+    bool initiateAuthenticationFinish() { return true; }
+    void cancelAuthentication() {}
 };
 
-#endif
+#endif /* SAILFISH_POLKIT_AGENT_LISTENER_H */
