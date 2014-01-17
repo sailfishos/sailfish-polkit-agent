@@ -19,12 +19,13 @@
 
 #include "listener.h"
 
-#include <QCoreApplication>
+#include <QGuiApplication>
 #include <PolkitQt1/Subject>
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication app(argc, argv);
+    QGuiApplication app(argc, argv);
+    app.setQuitOnLastWindowClosed(false);
 
     SailfishPolKitAgentListener listener;
     PolkitQt1::UnixSessionSubject session(getsid(0));

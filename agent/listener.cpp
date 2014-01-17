@@ -20,9 +20,10 @@
 
 #include "listener.h"
 
+#include "dialog.h"
+
+
 #include <QDebug>
-#include <QStringList>
-#include <QProcess>
 
 SailfishPolKitAgentListener::SailfishPolKitAgentListener(QObject *parent)
     : PolkitQt1::Agent::Listener(parent)
@@ -45,15 +46,9 @@ SailfishPolKitAgentListener::initiateAuthentication(const QString &actionId,
     qDebug() << "iconName: " << iconName;
     qDebug() << "details: " << details.keys();
     qDebug() << "cookie: " << cookie;
-
     Q_FOREACH (const PolkitQt1::Identity &identity, identities) {
         qDebug() << "identity: " << identity.toString();
-        QProcess helper;
-        QStringList args;
-        args << cookie << "root" /* XXX: use identity */;
-        helper.start("/usr/libexec/sailfish-polkit-agent-helper", args);
-        qDebug() << "GOT:" << helper.readAll();
-        helper.waitForFinished();
-        result->setCompleted();
     }
+
+    new ConfirmationDialog(actionId, message, cookie, identities.first().toString(), result);
 }
