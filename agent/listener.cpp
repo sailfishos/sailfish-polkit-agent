@@ -22,8 +22,8 @@
 
 #include "dialog.h"
 
-
 #include <QDebug>
+#include <QMap>
 
 SailfishPolKitAgentListener::SailfishPolKitAgentListener(QObject *parent)
     : PolkitQt1::Agent::Listener(parent)
@@ -46,9 +46,16 @@ SailfishPolKitAgentListener::initiateAuthentication(const QString &actionId,
     qDebug() << "iconName: " << iconName;
     qDebug() << "details: " << details.keys();
     qDebug() << "cookie: " << cookie;
+
+    QVariantMap mdetails;
+    Q_FOREACH (const QString &key, details.keys()) {
+        mdetails[key] = details.lookup(key);
+        qDebug() << "details[" << key << "] =" << details.lookup(key);
+    }
+
     Q_FOREACH (const PolkitQt1::Identity &identity, identities) {
         qDebug() << "identity: " << identity.toString();
     }
 
-    new ConfirmationDialog(actionId, message, cookie, identities.first().toString(), result);
+    new ConfirmationDialog(actionId, message, mdetails, cookie, identities.first().toString(), result);
 }

@@ -25,11 +25,6 @@ ApplicationWindow {
                 iconSource: 'image://theme/icon-cover-cancel'
                 onTriggered: confirmation.setConfirmationResult(false)
             }
-
-            CoverAction {
-                iconSource: 'image://theme/icon-cover-answer'
-                onTriggered: confirmation.setConfirmationResult(true)
-            }
         }
     }
 
@@ -41,9 +36,13 @@ ApplicationWindow {
 
         SilicaFlickable {
             anchors.fill: parent
+            contentHeight: questionColumn.height
+
+            VerticalScrollDecorator {}
 
             Column {
-                spacing: Theme.paddingMedium
+                id: questionColumn
+                spacing: Theme.paddingSmall
 
                 anchors {
                     left: parent.left
@@ -75,7 +74,38 @@ ApplicationWindow {
                     wrapMode: Text.WrapAnywhere
                     font.pixelSize: Theme.fontSizeExtraSmall
                     color: Theme.secondaryColor
-                    text: confirmation.action
+                    text: [
+                        confirmation.action,
+                        'Identity: ' + confirmation.identity
+                    ].join('\n')
+                }
+
+                SectionHeader {
+                    text: 'Subject'
+                }
+
+                ProcessInfo {
+                    model: [
+                        ['PID', confirmation.subject.pid],
+                        ['User', confirmation.subject.user],
+                        ['Group', confirmation.subject.group],
+                        ['Application', confirmation.subject.exec],
+                        ['Command', confirmation.subject.cmdline.join(' ')]
+                    ]
+                }
+
+                SectionHeader {
+                    text: 'Caller'
+                }
+
+                ProcessInfo {
+                    model: [
+                        ['PID', confirmation.caller.pid],
+                        ['User', confirmation.caller.user],
+                        ['Group', confirmation.caller.group],
+                        ['Application', confirmation.caller.exec],
+                        ['Command', confirmation.caller.cmdline.join(' ')]
+                    ]
                 }
             }
         }
