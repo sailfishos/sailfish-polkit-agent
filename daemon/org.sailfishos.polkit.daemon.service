@@ -1,0 +1,5 @@
+[D-BUS Service]
+Interface=org.sailfishos.polkit.daemon
+Name=org.sailfishos.polkit.daemon
+Exec=/usr/libexec/sailfish-polkit-daemon
+User=root

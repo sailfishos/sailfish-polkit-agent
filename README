@@ -1,0 +1,33 @@
+Sailfish polkit Agent
+=====================
+
+This is the polkit[1] agent for Sailfish OS. It is split into two parts:
+
+     +-----------------------+           +------------------------+
+     | sailfish-polkit-agent |           | sailfish-polkit-daemon |
+     |                       | --------> |                        |
+     | in-session, user nemo |           | on demand, user root   |
+     +-----------------------+           +------------------------+
+
+The sailfish-polkit-agent is running in the post-user-session and will register
+itself as authentication agent with the polkit authority. When a polkit
+authorization request comes in, it will decide whether to grant or deny the
+request automatically or (if a decision cannot be made automatically) show a
+dialog to let the user choose whether or not to grant the request.
+
+If the request is granted, the agent will send a D-Bus call with the cookie and
+requested identity to sailfish-polkit-daemon on the System D-Bus. This is
+required, as the polkit authority will only accept agent responses coming from
+processes with uid=0. In order to prevent non-agent applications from faking a
+response via D-Bus, sailfish-polkit-daemon checks if the requesting process is
+in the "privileged" group (effective gid). The sailfish-polkit-daemon will then
+wait for possible other requests, or just quit after a timeout (it will always
+be D-Bus activated on demand when required).
+
+TODO:
+
+    add: /usr/bin/sailfish-polkit-agent,n
+     to: /usr/share/mapplauncherd/privileges
+
+
+[1] http://www.freedesktop.org/wiki/Software/polkit/

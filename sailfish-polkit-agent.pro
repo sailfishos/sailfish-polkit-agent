@@ -1,2 +1,2 @@
 TEMPLATE = subdirs
-SUBDIRS += agent helper
+SUBDIRS += agent daemon

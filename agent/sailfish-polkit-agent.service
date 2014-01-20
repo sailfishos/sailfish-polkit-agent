@@ -1,0 +1,7 @@
+[Unit]
+Description=polkit agent
+After=user-session.target booster-silica-qt5.service
+Requires=dbus.socket booster-silica-qt5.service
+
+[Service]
+ExecStart=/usr/bin/invoker -o -s --type=silica-qt5 /usr/bin/sailfish-polkit-agent

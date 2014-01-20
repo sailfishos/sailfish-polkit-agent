@@ -1,6 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>qml/confirmation.qml</file>
-        <file>qml/ProcessInfo.qml</file>
-    </qresource>
-</RCC>

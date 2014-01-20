@@ -19,17 +19,19 @@
 
 #include "listener.h"
 
+#include <sailfishapp.h>
+
 #include <QGuiApplication>
 #include <PolkitQt1/Subject>
 
 int main(int argc, char *argv[])
 {
-    QGuiApplication app(argc, argv);
-    app.setQuitOnLastWindowClosed(false);
+    QGuiApplication *app = SailfishApp::application(argc, argv);
+    app->setQuitOnLastWindowClosed(false);
 
     SailfishPolKitAgentListener listener;
     PolkitQt1::UnixSessionSubject session(getsid(0));
-    listener.registerListener(session, "/org/sailfishos/PolicyKit1/AuthenticationAgent");
+    listener.registerListener(session, "/org/sailfishos/polkit/AuthenticationAgent");
 
-    return app.exec();
+    return app->exec();
 }

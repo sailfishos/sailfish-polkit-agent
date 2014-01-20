@@ -2,8 +2,10 @@
 
 #include <QDebug>
 #include <QQmlContext>
-#include <QProcess>
+#include <QDBusInterface>
 #include <QFileInfo>
+
+#include <sailfishapp.h>
 
 
 static QVariantMap
@@ -61,7 +63,7 @@ ConfirmationDialog::ConfirmationDialog(const QString &action,
     , m_got_confirmation(false)
     , m_subject()
     , m_caller()
-    , m_view(new QQuickView())
+    , m_view(SailfishApp::createView())
 {
     qDebug() << "Creating ConfirmationDialog";
 
@@ -73,7 +75,6 @@ ConfirmationDialog::ConfirmationDialog(const QString &action,
     }
 
     if (details.contains("polkit.caller-pid")) {
-        // TODO: Parse caller PID
         long pid = details["polkit.caller-pid"].toString().toLong();
         m_caller = getProcessDetails(pid);
     } else {
@@ -81,7 +82,7 @@ ConfirmationDialog::ConfirmationDialog(const QString &action,
     }
 
     m_view->rootContext()->setContextProperty("confirmation", this);
-    m_view->setSource(QUrl("qrc:/qml/confirmation.qml"));
+    m_view->setSource(SailfishApp::pathTo("qml/confirmation.qml"));
     m_view->show();
 
     connect(m_view, SIGNAL(closing(QQuickCloseEvent*)),
@@ -106,11 +107,15 @@ ConfirmationDialog::setConfirmationResult(bool approved)
     qDebug() << "confirm:" << approved;
 
     if (approved) {
-        QProcess helper;
-        helper.start("/usr/libexec/sailfish-polkit-agent-helper",
-                QStringList() << m_cookie << "root" /* XXX: use identity */);
-        qDebug() << "GOT:" << helper.readAll();
-        helper.waitForFinished();
+        QDBusInterface daemon("org.sailfishos.polkit.daemon",
+                "/org/sailfishos/polkit/daemon",
+                "org.sailfishos.polkit.daemon",
+                QDBusConnection::systemBus());
+
+        QVariantList args;
+        args << m_cookie << m_identity;
+
+        daemon.callWithArgumentList(QDBus::Block, "sendResponse", args);
     }
 
     m_result->setCompleted();
