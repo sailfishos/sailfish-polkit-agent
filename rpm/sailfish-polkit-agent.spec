@@ -42,6 +42,7 @@ if pgrep -u root -f %{name} >/dev/null; then
 fi
 # (Re-)start the agent
 systemctl-user daemon-reload || :
+systemctl-user stop %{name}.service || :
 systemctl-user start %{name}.service || :
 
 %preun

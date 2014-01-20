@@ -35,7 +35,7 @@
 
 static void
 finishRequest(bool approved, PolkitQt1::Agent::AsyncResult *result,
-        const QString &cookie, const QString &identity)
+        const QString &cookie=QString(), const QString &identity=QString())
 {
     if (approved) {
         QDBusInterface daemon(SAILFISH_POLKIT_DAEMON_NAME,
@@ -125,19 +125,44 @@ SailfishPolKitAgentListener::initiateAuthentication(const QString &actionId,
 
     QString identity = identities.first().toString();
 
-    QVariantMap mdetails;
-    mdetails["subject"] = getProcessDetails(details.lookup("polkit.subject-pid").toLong());
-    mdetails["caller"] = getProcessDetails(details.lookup("polkit.caller-pid").toLong());
+    QVariantMap subject = getProcessDetails(details.lookup("polkit.subject-pid").toLong());
+    QVariantMap caller = getProcessDetails(details.lookup("polkit.caller-pid").toLong());
 
-    // TODO: Check if we can auto-approve/-deny the request based on subject,
-    // caller and actionId. If so, do not open a dialog, and instead directly
-    // call finishRequest(approved, result, cookie, identity).
+    qDebug() << "Subject:" << subject;
+    qDebug() << "Caller:" << caller;
 
-    ConfirmationDialog *dialog = new ConfirmationDialog(actionId, message,
-            mdetails, cookie, identity, result);
+    // TODO: Determine whether or not sideloading is enabled (via SSU?)
+    bool sideloading = false;
+    bool developermode = QFile("/usr/bin/devel-su").exists();
 
-    QObject::connect(dialog, SIGNAL(finished(ConfirmationDialog *)),
-                     this, SLOT(onFinished(ConfirmationDialog *)));
+    qDebug() << "Sideloading:" << sideloading;
+    qDebug() << "Developer mode:" << developermode;
+
+    // TODO: Move rules (where possible) to polkit JavaScript rules files
+    if (subject["group"].toString() == "privileged") {
+        // Allow setgid privileged apps to call everything
+        qDebug() << "Allowing access to" << actionId << "for privileged app.";
+        finishRequest(true, result, cookie, identity);
+    } else if (actionId.startsWith("org.freedesktop.packagekit.") &&
+            !(sideloading || developermode)) {
+        // Disallow PackageKit APIs if we don't have sideloading or developer
+        // mode (TODO: offer to enable sideloading in the UI/show notification)
+        qDebug() << "Denying access to" << actionId << "(no sideloading/devmode)";
+        finishRequest(false, result);
+    } else {
+        // In all other cases, we just ask the interactive user and
+        // expect them to know what they are doing
+
+        QVariantMap mdetails;
+        mdetails["subject"] = subject;
+        mdetails["caller"] = caller;
+
+        ConfirmationDialog *dialog = new ConfirmationDialog(actionId, message,
+                mdetails, cookie, identity, result);
+
+        QObject::connect(dialog, SIGNAL(finished(ConfirmationDialog *)),
+                         this, SLOT(onFinished(ConfirmationDialog *)));
+    }
 }
 
 void
