@@ -37,10 +37,16 @@ public:
     QVariantMap subject() { return m_subject; }
     QVariantMap caller() { return m_caller; }
 
+    PolkitQt1::Agent::AsyncResult *result() { return m_result; }
+    bool approved() { return m_approved; }
+
 signals:
     // This signal is never emitted at the moment, as we don't change the
     // properties of this window dynamically for now
     void changed();
+
+    // Send approval to the D-Bus helper daemon
+    void finished(ConfirmationDialog *dialog);
 
 private slots:
     void onViewClosing();
@@ -53,6 +59,7 @@ private:
     QString m_identity;
     PolkitQt1::Agent::AsyncResult *m_result;
     bool m_got_confirmation;
+    bool m_approved;
 
     QVariantMap m_subject;
     QVariantMap m_caller;

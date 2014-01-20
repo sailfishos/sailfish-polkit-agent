@@ -2,52 +2,8 @@
 
 #include <QDebug>
 #include <QQmlContext>
-#include <QDBusInterface>
-#include <QFileInfo>
 
 #include <sailfishapp.h>
-
-
-static QVariantMap
-getProcessDetails(long pid)
-{
-    QVariantMap result;
-
-    QFileInfo procdir(QString("/proc/%1").arg(pid));
-    QFile cmdline(QString("/proc/%1/cmdline").arg(pid));
-
-    QString execpath = QString("/proc/%1/exe").arg(pid);
-    QFileInfo execinfo(execpath);
-    QString execfile = execinfo.canonicalFilePath();
-
-    cmdline.open(QIODevice::ReadOnly);
-    QList<QByteArray> bargs = cmdline.readAll().split('\0');
-    cmdline.close();
-
-    QStringList args;
-    Q_FOREACH (const QByteArray &arg, bargs) {
-        args << QString::fromUtf8(arg);
-    }
-
-    // Usually the last arg is "" (the cmdline is terminated by '\0')
-    if (args.size() && args.last() == "") {
-        args.pop_back();
-    }
-
-    // Fall back to using the first command line argument if we cannot
-    // read the /proc/<pid>/exe file (e.g. because the owner is root)
-    if (args.size() && execfile == execpath) {
-        execfile = args.first();
-    }
-
-    result["pid"] = qlonglong(pid);
-    result["user"] = procdir.owner();
-    result["group"] = procdir.group();
-    result["exec"] = execfile;
-    result["cmdline"] = args;
-
-    return result;
-}
 
 
 ConfirmationDialog::ConfirmationDialog(const QString &action,
@@ -61,25 +17,12 @@ ConfirmationDialog::ConfirmationDialog(const QString &action,
     , m_identity(identity)
     , m_result(result)
     , m_got_confirmation(false)
-    , m_subject()
-    , m_caller()
+    , m_approved(false)
+    , m_subject(details["subject"].toMap())
+    , m_caller(details["caller"].toMap())
     , m_view(SailfishApp::createView())
 {
     qDebug() << "Creating ConfirmationDialog";
-
-    if (details.contains("polkit.subject-pid")) {
-        long pid = details["polkit.subject-pid"].toString().toLong();
-        m_subject = getProcessDetails(pid);
-    } else {
-        // TODO
-    }
-
-    if (details.contains("polkit.caller-pid")) {
-        long pid = details["polkit.caller-pid"].toString().toLong();
-        m_caller = getProcessDetails(pid);
-    } else {
-        // TODO
-    }
 
     m_view->rootContext()->setContextProperty("confirmation", this);
     m_view->setSource(SailfishApp::pathTo("qml/confirmation.qml"));
@@ -104,22 +47,9 @@ ConfirmationDialog::setConfirmationResult(bool approved)
     }
 
     m_got_confirmation = true;
-    qDebug() << "confirm:" << approved;
+    m_approved = approved;
 
-    if (approved) {
-        QDBusInterface daemon("org.sailfishos.polkit.daemon",
-                "/org/sailfishos/polkit/daemon",
-                "org.sailfishos.polkit.daemon",
-                QDBusConnection::systemBus());
-
-        QVariantList args;
-        args << m_cookie << m_identity;
-
-        daemon.callWithArgumentList(QDBus::Block, "sendResponse", args);
-    }
-
-    m_result->setCompleted();
-    deleteLater();
+    emit finished(this);
 }
 
 void

@@ -40,10 +40,9 @@ if pgrep -u root -f %{name} >/dev/null; then
         --print-reply %{dbus_service_path} \
         %{dbus_service_name}.quit >/dev/null 2>&1 || true
 fi
-
 # (Re-)start the agent
 systemctl-user daemon-reload || :
-systemctl-user restart %{name}.service || :
+systemctl-user start %{name}.service || :
 
 %preun
 # Ask running daemon to quit
@@ -52,7 +51,6 @@ if pgrep -u root -f %{name} >/dev/null; then
         --print-reply %{dbus_service_path} \
         %{dbus_service_name}.quit >/dev/null 2>&1 || true
 fi
-
 # Stop the agent
 systemctl-user stop %{name}.service || :
 systemctl-user daemon-reload || :

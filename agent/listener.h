@@ -29,6 +29,8 @@
 #include <PolkitQt1/Agent/Listener>
 #include <PolkitQt1/Agent/Session>
 
+#include "dialog.h"
+
 
 class SailfishPolKitAgentListener : public PolkitQt1::Agent::Listener
 {
@@ -50,6 +52,9 @@ public Q_SLOTS:
 
     bool initiateAuthenticationFinish() { return true; }
     void cancelAuthentication() {}
+
+private slots:
+    void onFinished(ConfirmationDialog *dialog);
 };
 
 #endif /* SAILFISH_POLKIT_AGENT_LISTENER_H */

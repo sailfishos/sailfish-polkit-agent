@@ -24,6 +24,68 @@
 
 #include <QDebug>
 #include <QMap>
+#include <QFileInfo>
+#include <QDBusInterface>
+
+static void
+finishRequest(bool approved, PolkitQt1::Agent::AsyncResult *result,
+        const QString &cookie, const QString &identity)
+{
+    if (approved) {
+        QDBusInterface daemon("org.sailfishos.polkit.daemon",
+                "/org/sailfishos/polkit/daemon",
+                "org.sailfishos.polkit.daemon",
+                QDBusConnection::systemBus());
+
+        QVariantList args;
+        args << cookie << identity;
+        daemon.callWithArgumentList(QDBus::Block, "sendResponse", args);
+    }
+
+    result->setCompleted();
+}
+
+static QVariantMap
+getProcessDetails(long pid)
+{
+    QVariantMap result;
+
+    QFileInfo procdir(QString("/proc/%1").arg(pid));
+    QFile cmdline(QString("/proc/%1/cmdline").arg(pid));
+
+    QString execpath = QString("/proc/%1/exe").arg(pid);
+    QFileInfo execinfo(execpath);
+    QString execfile = execinfo.canonicalFilePath();
+
+    cmdline.open(QIODevice::ReadOnly);
+    QList<QByteArray> bargs = cmdline.readAll().split('\0');
+    cmdline.close();
+
+    QStringList args;
+    Q_FOREACH (const QByteArray &arg, bargs) {
+        args << QString::fromUtf8(arg);
+    }
+
+    // Usually the last arg is "" (the cmdline is terminated by '\0')
+    if (args.size() && args.last() == "") {
+        args.pop_back();
+    }
+
+    // Fall back to using the first command line argument if we cannot
+    // read the /proc/<pid>/exe file (e.g. because the owner is root)
+    if (args.size() && execfile == execpath) {
+        execfile = args.first();
+    }
+
+    result["pid"] = qlonglong(pid);
+    result["user"] = procdir.owner();
+    result["group"] = procdir.group();
+    result["exec"] = execfile;
+    result["cmdline"] = args;
+
+    return result;
+}
+
 
 SailfishPolKitAgentListener::SailfishPolKitAgentListener(QObject *parent)
     : PolkitQt1::Agent::Listener(parent)
@@ -47,9 +109,7 @@ SailfishPolKitAgentListener::initiateAuthentication(const QString &actionId,
     qDebug() << "details: " << details.keys();
     qDebug() << "cookie: " << cookie;
 
-    QVariantMap mdetails;
     Q_FOREACH (const QString &key, details.keys()) {
-        mdetails[key] = details.lookup(key);
         qDebug() << "details[" << key << "] =" << details.lookup(key);
     }
 
@@ -57,5 +117,27 @@ SailfishPolKitAgentListener::initiateAuthentication(const QString &actionId,
         qDebug() << "identity: " << identity.toString();
     }
 
-    new ConfirmationDialog(actionId, message, mdetails, cookie, identities.first().toString(), result);
+    QString identity = identities.first().toString();
+
+    QVariantMap mdetails;
+    mdetails["subject"] = getProcessDetails(details.lookup("polkit.subject-pid").toLong());
+    mdetails["caller"] = getProcessDetails(details.lookup("polkit.caller-pid").toLong());
+
+    // TODO: Check if we can auto-approve/-deny the request based on subject,
+    // caller and actionId. If so, do not open a dialog, and instead directly
+    // call finishRequest(approved, result, cookie, identity).
+
+    ConfirmationDialog *dialog = new ConfirmationDialog(actionId, message,
+            mdetails, cookie, identity, result);
+
+    QObject::connect(dialog, SIGNAL(finished(ConfirmationDialog *)),
+                     this, SLOT(onFinished(ConfirmationDialog *)));
+}
+
+void
+SailfishPolKitAgentListener::onFinished(ConfirmationDialog *dialog)
+{
+    finishRequest(dialog->approved(), dialog->result(),
+            dialog->cookie(), dialog->identity());
+    dialog->deleteLater();
 }
