@@ -1,8 +1,12 @@
-/*
- * This file is part of the Polkit-qt project
- * Copyright (C) 2009 Jaroslav Reznik <jreznik@redhat.com>
+/**
+ * Sailfish polkit Agent: GUI Agent
+ * Copyright (C) 2014 Jolla Ltd.
+ * Contact: Thomas Perl <thomas.perl@jolla.com>
  *
- * This library is free software; you can redistribute it and/or
+ * Partially based on polkit-qt-1 example code:
+ * Copyright (C) 2009 Jaroslav Reznik
+ *
+ * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
@@ -16,11 +20,13 @@
  * along with this library; see the file COPYING.LIB. If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  * Boston, MA 02110-1301, USA.
- */
+ **/
 
 #include "listener.h"
 
 #include "dialog.h"
+
+#include "sailfish-polkit-agent.h"
 
 #include <QDebug>
 #include <QMap>
@@ -32,14 +38,14 @@ finishRequest(bool approved, PolkitQt1::Agent::AsyncResult *result,
         const QString &cookie, const QString &identity)
 {
     if (approved) {
-        QDBusInterface daemon("org.sailfishos.polkit.daemon",
-                "/org/sailfishos/polkit/daemon",
-                "org.sailfishos.polkit.daemon",
+        QDBusInterface daemon(SAILFISH_POLKIT_DAEMON_NAME,
+                SAILFISH_POLKIT_DAEMON_PATH,
+                SAILFISH_POLKIT_DAEMON_INTF,
                 QDBusConnection::systemBus());
 
-        QVariantList args;
-        args << cookie << identity;
-        daemon.callWithArgumentList(QDBus::Block, "sendResponse", args);
+        daemon.callWithArgumentList(QDBus::Block,
+                SAILFISH_POLKIT_DAEMON_RESPONSE_METHOD,
+                QVariantList() << cookie << identity);
     }
 
     result->setCompleted();

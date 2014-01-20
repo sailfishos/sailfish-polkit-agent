@@ -23,19 +23,14 @@
 #include "polkitdaemon.h"
 #include "polkitdaemonadaptor.h"
 
+#include "sailfish-polkit-agent.h"
+
 #include <QDBusConnection>
 #include <PolkitQt1/Authority>
 #include <PolkitQt1/Identity>
 
 
 namespace Sailfish {
-
-const char *
-PolkitDaemon::SERVICE_NAME = "org.sailfishos.polkit.daemon";
-
-const char *
-PolkitDaemon::OBJECT_PATH = "/org/sailfishos/polkit/daemon";
-
 
 PolkitDaemon::PolkitDaemon(QObject *parent)
     : QObject(parent)
@@ -52,12 +47,14 @@ PolkitDaemon::PolkitDaemon(QObject *parent)
                      this, SLOT(quit()));
 
     QDBusConnection connection = QDBusConnection::systemBus();
-    if (!connection.registerService(SERVICE_NAME)) {
-        qFatal("Cannot register D-Bus service at %s", SERVICE_NAME);
+    if (!connection.registerService(SAILFISH_POLKIT_DAEMON_NAME)) {
+        qFatal("Cannot register D-Bus service at %s",
+                SAILFISH_POLKIT_DAEMON_NAME);
     }
 
-    if (!connection.registerObject(OBJECT_PATH, this)) {
-        qFatal("Cannot register object at %s", OBJECT_PATH);
+    if (!connection.registerObject(SAILFISH_POLKIT_DAEMON_PATH, this)) {
+        qFatal("Cannot register object at %s",
+                SAILFISH_POLKIT_DAEMON_PATH);
     }
 
     new PolkitDaemonAdaptor(this);

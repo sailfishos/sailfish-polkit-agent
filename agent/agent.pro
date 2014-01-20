@@ -10,8 +10,8 @@ HEADERS += listener.h dialog.h
 
 INCLUDEPATH += /usr/include/polkit-qt-1
 
-INCLUDEPATH += .
-DEPENDPATH += .
+INCLUDEPATH += . ../include
+DEPENDPATH += . ../include
 
 unit.path = /usr/lib/systemd/user/
 unit.files = sailfish-polkit-agent.service

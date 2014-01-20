@@ -9,8 +9,8 @@ PKGCONFIG += polkit-qt-core-1
 
 INCLUDEPATH += /usr/include/polkit-qt-1
 
-DEPENDPATH += .
-INCLUDEPATH += .
+DEPENDPATH += . ../include
+INCLUDEPATH += . ../include
 
 SOURCES += main.cpp
 

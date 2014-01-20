@@ -1,5 +1,5 @@
 /**
- * Sailfish polkit Agent: D-Bus Helper Daemon
+ * Sailfish polkit Agent: Configuration file
  * Copyright (C) 2014 Jolla Ltd.
  * Contact: Thomas Perl <thomas.perl@jolla.com>
  *
@@ -19,35 +19,23 @@
  * Boston, MA 02110-1301, USA.
  **/
 
+#ifndef SAILFISH_POLKIT_AGENT_CONFIGURATION_H
+#define SAILFISH_POLKIT_AGENT_CONFIGURATION_H
 
-#ifndef ORG_SAILFISHOS_POLKIT_DAEMON_H
-#define ORG_SAILFISHOS_POLKIT_DAEMON_H
 
-#include <QObject>
-#include <QString>
-#include <QTimer>
-#include <QDBusContext>
+// Object path of the polkit listener object running in the agent process
+#define SAILFISH_POLKIT_AGENT_PATH "/org/sailfishos/polkit/AuthenticationAgent"
 
-namespace Sailfish {
+// D-Bus name of the polkit daemon helper
+#define SAILFISH_POLKIT_DAEMON_NAME "org.sailfishos.polkit.daemon"
 
-class PolkitDaemon : public QObject, protected QDBusContext {
-    Q_OBJECT
+// D-Bus path of the polkit daemon helper
+#define SAILFISH_POLKIT_DAEMON_PATH "/org/sailfishos/polkit/daemon"
 
-    public:
-        PolkitDaemon(QObject *parent=NULL);
-        virtual ~PolkitDaemon();
+// D-Bus interface of the polkit daemon helper
+#define SAILFISH_POLKIT_DAEMON_INTF "org.sailfishos.polkit.daemon"
 
-    public slots:
-        void sendResponse(const QString &cookie, const QString &identity);
-        void quit();
+// D-Bus method (of the polkit daemon helper) for sending a response
+#define SAILFISH_POLKIT_DAEMON_RESPONSE_METHOD "sendResponse"
 
-    private:
-        bool isPrivileged();
-
-    private:
-        QTimer autoclose;
-};
-
-}; /* namespace Sailfish */
-
-#endif /* ORG_SAILFISHOS_POLKIT_DAEMON_H */
+#endif /* SAILFISH_POLKIT_AGENT_CONFIGURATION_H */
