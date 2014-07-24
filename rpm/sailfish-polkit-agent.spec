@@ -11,6 +11,8 @@ Url: http://sailfishos.org/
 Source: %{name}-%{version}.tar.bz2
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5DBus)
+BuildRequires: pkgconfig(Qt5Quick)
+BuildRequires: pkgconfig(Qt5Qml)
 BuildRequires: pkgconfig(polkit-qt-agent-1)
 BuildRequires: pkgconfig(polkit-qt-core-1)
 Requires: dbus
