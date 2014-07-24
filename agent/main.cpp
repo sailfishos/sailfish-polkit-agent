@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     app->setQuitOnLastWindowClosed(false);
 
     SailfishPolKitAgentListener listener;
-    PolkitQt1::UnixSessionSubject session(getsid(0));
+    PolkitQt1::UnixSessionSubject session(getpid());
     listener.registerListener(session, SAILFISH_POLKIT_AGENT_PATH);
 
     return app->exec();
