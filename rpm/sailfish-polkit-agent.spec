@@ -2,7 +2,7 @@
 %define dbus_service_path /org/sailfishos/polkit/daemon
 
 Name: sailfish-polkit-agent
-Version: 1.0.1
+Version: 1.0.2
 Release: 1
 Summary: Sailfish polkit Agent
 Group: Utilities
