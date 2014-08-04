@@ -31,6 +31,8 @@
 #include <QGuiApplication>
 #include <PolkitQt1/Subject>
 
+#include <systemd/sd-login.h>
+
 
 int main(int argc, char *argv[])
 {
@@ -38,8 +40,18 @@ int main(int argc, char *argv[])
     app->setQuitOnLastWindowClosed(false);
 
     SailfishPolKitAgentListener listener;
-    PolkitQt1::UnixSessionSubject session(getpid());
-    listener.registerListener(session, SAILFISH_POLKIT_AGENT_PATH);
+
+    char *session;
+    if (sd_pid_get_session(getpid(), &session) >= 0) {
+        // Running in a session
+        listener.registerListener(PolkitQt1::UnixSessionSubject(getpid()),
+                SAILFISH_POLKIT_AGENT_PATH);
+        free(session);
+    } else {
+        // Not running in a session - use "sailfish" session
+        listener.registerListener(PolkitQt1::UnixSessionSubject("sailfish"),
+                SAILFISH_POLKIT_AGENT_PATH);
+    }
 
     return app->exec();
 }

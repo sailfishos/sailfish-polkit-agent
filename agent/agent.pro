@@ -3,7 +3,7 @@ TARGET = sailfish-polkit-agent
 CONFIG += sailfishapp
 QT += quick qml dbus
 
-PKGCONFIG += polkit-qt-agent-1 polkit-qt-core-1
+PKGCONFIG += polkit-qt-agent-1 polkit-qt-core-1 libsystemd-login
 
 SOURCES += main.cpp listener.cpp dialog.cpp
 HEADERS += listener.h dialog.h
