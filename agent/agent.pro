@@ -11,7 +11,8 @@ DEPENDPATH += . ../include
 
 HEADERS += listener.h \
     dialog.h \
-    sessionhelper.h
+    sessionhelper.h \
+    qobjectptr.h
 
 SOURCES += main.cpp \
     listener.cpp \

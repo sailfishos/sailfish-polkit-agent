@@ -25,11 +25,6 @@ import Sailfish.Silica 1.0
 Column {
     property alias model: repeater.model
 
-    anchors {
-        left: parent.left
-        right: parent.right
-    }
-
     Repeater {
         id: repeater
 
