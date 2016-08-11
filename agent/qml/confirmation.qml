@@ -68,12 +68,10 @@ ApplicationWindow {
                 anchors {
                     left: parent.left
                     right: parent.right
-                    margins: Theme.paddingLarge
                 }
 
                 DialogHeader {
                     width: parent.width
-                    title: 'System Permission'
                     acceptText: 'Allow'
                     cancelText: 'Deny'
                 }
@@ -81,24 +79,12 @@ ApplicationWindow {
                 Label {
                     anchors {
                         left: parent.left
+                        leftMargin: Theme.paddingMedium
                         right: parent.right
+                        rightMargin: Theme.paddingMedium
                     }
                     wrapMode: Text.WordWrap
                     text: confirmation.message
-                }
-
-                Label {
-                    anchors {
-                        left: parent.left
-                        right: parent.right
-                    }
-                    wrapMode: Text.WrapAnywhere
-                    font.pixelSize: Theme.fontSizeExtraSmall
-                    color: Theme.secondaryColor
-                    text: [
-                        confirmation.action,
-                        'Identity: ' + confirmation.identity
-                    ].join('\n')
                 }
 
                 SectionHeader {
@@ -106,6 +92,12 @@ ApplicationWindow {
                 }
 
                 ProcessInfo {
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.paddingMedium
+                        right: parent.right
+                        rightMargin: Theme.paddingMedium
+                    }
                     model: [
                         ['PID', confirmation.subject.pid],
                         ['User', confirmation.subject.user],
@@ -120,6 +112,12 @@ ApplicationWindow {
                 }
 
                 ProcessInfo {
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.paddingMedium
+                        right: parent.right
+                        rightMargin: Theme.paddingMedium
+                    }
                     model: [
                         ['PID', confirmation.caller.pid],
                         ['User', confirmation.caller.user],

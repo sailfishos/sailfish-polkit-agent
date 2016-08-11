@@ -1,0 +1,42 @@
+Name: sailfish-polkit-agent
+Summary: Sailfish polkit Agent
+Version: 1.0.2
+Release: 1
+Group: Qt/Qt
+URL: http://sailfishos.org/
+License: LGPL
+Sources:
+- '%{name}-%{version}.tar.bz2'
+Description: |
+  This package contains the polkit authentication agent for Sailfish OS.
+Configure: none
+Builder: qtc5
+
+PkgConfigBR:
+  - Qt5Core
+  - Qt5DBus
+  - Qt5Quick
+  - Qt5Qml
+  - polkit-qt-agent-1
+  - polkit-qt-core-1
+  - libsystemd-login
+  - sailfishapp >= 0.0.10
+
+Requires:
+  - dbus
+  - procps
+
+# All installed files
+Files:
+  # Agent application and QML
+  - '%{_bindir}/%{name}'
+  - '%{_datadir}/%{name}/qml/*.qml'
+  
+  # D-Bus Daemon (helper, system bus)
+  - '%{_libexecdir}/sailfish-polkit-daemon'
+  - '%{_datadir}/dbus-1/system-services/%{dbus_service_name}.service'
+  - '%{_sysconfdir}/dbus-1/system.d/%{dbus_service_name}.conf'
+
+  # Agent application as systemd user session service
+  - '%{_libdir}/systemd/user/%{name}.service'
+  - '%{_libdir}/systemd/user/post-user-session.target.wants/%{name}.service'

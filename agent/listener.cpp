@@ -1,6 +1,6 @@
 /**
  * Sailfish polkit Agent: GUI Agent
- * Copyright (C) 2014 Jolla Ltd.
+ * Copyright (C) 2014-2016 Jolla Ltd.
  * Contact: Thomas Perl <thomas.perl@jolla.com>
  *
  * Partially based on polkit-qt-1 example code:
@@ -23,15 +23,39 @@
  **/
 
 #include "listener.h"
-
 #include "dialog.h"
-
 #include "sailfish-polkit-agent.h"
-
-#include <QDebug>
-#include <QMap>
 #include <QFileInfo>
 #include <QDBusInterface>
+#include <QLoggingCategory>
+#include <PolkitQt1/Details>
+
+Q_DECLARE_LOGGING_CATEGORY(listenerLog)
+Q_LOGGING_CATEGORY(listenerLog, "listener")
+
+static QDebug operator<<(QDebug debug, const PolkitQt1::Details &details)
+{
+    QStringList out;
+    foreach (const QString &key, details.keys()) {
+        out.append(QString(QLatin1String("%1: %2")).arg(key, details.lookup(key)));
+    }
+
+    QDebugStateSaver saver(debug);
+    debug.nospace() << "{" << out.join(QLatin1String(", ")).toLocal8Bit().data() << "}";
+    return debug;
+}
+
+static QDebug operator<<(QDebug debug, const PolkitQt1::Identity::List &identities)
+{
+    QStringList out;
+    foreach (const PolkitQt1::Identity &identity, identities) {
+        out.append(identity.toString());
+    }
+
+    QDebugStateSaver saver(debug);
+    debug.nospace() << "[" << out.join(QLatin1String(", ")).toLocal8Bit().data() << "]";
+    return debug;
+}
 
 static void
 finishRequest(bool approved, PolkitQt1::Agent::AsyncResult *result,
@@ -98,10 +122,6 @@ SailfishPolKitAgentListener::SailfishPolKitAgentListener(QObject *parent)
 {
 }
 
-SailfishPolKitAgentListener::~SailfishPolKitAgentListener()
-{
-}
-
 void
 SailfishPolKitAgentListener::initiateAuthentication(const QString &actionId,
         const QString &message, const QString &iconName,
@@ -109,66 +129,83 @@ SailfishPolKitAgentListener::initiateAuthentication(const QString &actionId,
         const PolkitQt1::Identity::List &identities,
         PolkitQt1::Agent::AsyncResult *result)
 {
-    qDebug() << "action: " << actionId;
-    qDebug() << "message: " << message;
-    qDebug() << "iconName: " << iconName;
-    qDebug() << "details: " << details.keys();
-    qDebug() << "cookie: " << cookie;
-
-    Q_FOREACH (const QString &key, details.keys()) {
-        qDebug() << "details[" << key << "] =" << details.lookup(key);
+    if (m_dialog) {
+        qCWarning(listenerLog) << "Another authentication session is running";
+        result->setError(("Another authentication session is running, please try again later."));
+        result->setCompleted();
+        return;
     }
 
-    Q_FOREACH (const PolkitQt1::Identity &identity, identities) {
-        qDebug() << "identity: " << identity.toString();
-    }
-
-    QString identity = identities.first().toString();
+    qCDebug(listenerLog) << "Received an initiate authentication";
+    qCDebug(listenerLog) << "  action:" << actionId;
+    qCDebug(listenerLog) << "  message:" << message;
+    qCDebug(listenerLog) << "  iconName:" << iconName;
+    qCDebug(listenerLog) << "  details:" << details;
+    qCDebug(listenerLog) << "  cookie:" << cookie;
+    qCDebug(listenerLog) << "  identities:" << identities;
 
     QVariantMap subject = getProcessDetails(details.lookup("polkit.subject-pid").toLong());
     QVariantMap caller = getProcessDetails(details.lookup("polkit.caller-pid").toLong());
 
-    qDebug() << "Subject:" << subject;
-    qDebug() << "Caller:" << caller;
+    qCDebug(listenerLog) << "  subject:" << subject;
+    qCDebug(listenerLog) << "  caller:" << caller;
 
-    // TODO: Determine whether or not sideloading is enabled (via SSU?)
-    bool sideloading = false;
-    bool developermode = QFile("/usr/bin/devel-su").exists();
+    QVariantMap mdetails;
+    mdetails["subject"] = subject;
+    mdetails["caller"] = caller;
 
-    qDebug() << "Sideloading:" << sideloading;
-    qDebug() << "Developer mode:" << developermode;
+    ConfirmationDialog::Identity identity (getIdentity(identities));
+    if (identity == ConfirmationDialog::Invalid) {
+        qCWarning(listenerLog) << "No supported identity found. Provided identities" << identities;
+        result->setError(("No supported identity found."));
+        result->setCompleted();
+        return;
+    }
 
-    // TODO: Move rules (where possible) to polkit JavaScript rules files
-    if (subject["group"].toString() == "privileged") {
-        // Allow setgid privileged apps to call everything
-        qDebug() << "Allowing access to" << actionId << "for privileged app.";
-        finishRequest(true, result, cookie, identity);
-    } else if (actionId.startsWith("org.freedesktop.packagekit.") &&
-            !(sideloading || developermode)) {
-        // Disallow PackageKit APIs if we don't have sideloading or developer
-        // mode (TODO: offer to enable sideloading in the UI/show notification)
-        qDebug() << "Denying access to" << actionId << "(no sideloading/devmode)";
-        finishRequest(false, result);
-    } else {
-        // In all other cases, we just ask the interactive user and
-        // expect them to know what they are doing
+    m_dialog.reset(new ConfirmationDialog(getIdentity(identities), actionId, message, mdetails, result));
 
-        QVariantMap mdetails;
-        mdetails["subject"] = subject;
-        mdetails["caller"] = caller;
+    connect(m_dialog.get(), &ConfirmationDialog::finished, [this, result, cookie, identity]() {
+        finishRequest(m_dialog->approved(), result, cookie, userFromIdentity(identity));
+        m_dialog.reset();
+    });
+}
 
-        ConfirmationDialog *dialog = new ConfirmationDialog(actionId, message,
-                mdetails, cookie, identity, result);
+bool SailfishPolKitAgentListener::initiateAuthenticationFinish()
+{
+    return true;
+}
 
-        QObject::connect(dialog, SIGNAL(finished(ConfirmationDialog *)),
-                         this, SLOT(onFinished(ConfirmationDialog *)));
+void SailfishPolKitAgentListener::cancelAuthentication()
+{
+}
+
+QString SailfishPolKitAgentListener::userFromIdentity(ConfirmationDialog::Identity identity)
+{
+    switch (identity) {
+    case ConfirmationDialog::User:
+        return QLatin1String("nemo");
+    case ConfirmationDialog::Admin:
+        return QLatin1String("root");
+    default:
+        return QString();
     }
 }
 
-void
-SailfishPolKitAgentListener::onFinished(ConfirmationDialog *dialog)
+ConfirmationDialog::Identity SailfishPolKitAgentListener::getIdentity(const PolkitQt1::Identity::List &identities)
 {
-    finishRequest(dialog->approved(), dialog->result(),
-            dialog->cookie(), dialog->identity());
-    dialog->deleteLater();
+    // We get the lowest permission level.
+    // If we are asked to authorize as root and as nemo, we choose nemo over root
+    ConfirmationDialog::Identity returned (ConfirmationDialog::Invalid);
+
+    foreach (const PolkitQt1::Identity &identity, identities) {
+        const QString &name (identity.toString().remove("unix-user:"));
+        if (name == QLatin1String("nemo")) {
+            returned = ConfirmationDialog::User;
+        } else if (name == QLatin1String("root")) {
+            if (returned == ConfirmationDialog::Invalid) {
+                returned = ConfirmationDialog::Admin;
+            }
+        }
+    }
+    return returned;
 }

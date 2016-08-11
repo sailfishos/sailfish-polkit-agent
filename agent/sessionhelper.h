@@ -1,10 +1,7 @@
 /**
  * Sailfish polkit Agent: GUI Agent
- * Copyright (C) 2014-2016 Jolla Ltd.
- * Contact: Thomas Perl <thomas.perl@jolla.com>
- *
- * Partially based on polkit-qt-1 example code:
- * Copyright (C) 2009 Jaroslav Reznik
+ * Copyright (C) 2016 Jolla Ltd.
+ * Contact: Lucien Xu <sfietkonstantin@free.fr>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -22,19 +19,16 @@
  * Boston, MA 02110-1301, USA.
  **/
 
-#include <QGuiApplication>
-#include <sailfishapp.h>
-#include "sailfish-polkit-agent.h"
-#include "listener.h"
-#include "sessionhelper.h"
+#ifndef SESSIONHELPER_H
+#define SESSIONHELPER_H
 
-int main(int argc, char *argv[])
+#include <PolkitQt1/Subject>
+
+
+class SessionHelper
 {
-    QGuiApplication *app = SailfishApp::application(argc, argv);
-    app->setQuitOnLastWindowClosed(false);
+public:
+    static PolkitQt1::Subject getSeatedSession();
+};
 
-    SailfishPolKitAgentListener listener;
-    listener.registerListener(SessionHelper::getSeatedSession(), SAILFISH_POLKIT_AGENT_PATH);
-
-    return app->exec();
-}
+#endif // SESSIONHELPER_H

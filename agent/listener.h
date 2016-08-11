@@ -1,6 +1,6 @@
 /**
  * Sailfish polkit Agent: GUI Agent
- * Copyright (C) 2014 Jolla Ltd.
+ * Copyright (C) 2014-2016 Jolla Ltd.
  * Contact: Thomas Perl <thomas.perl@jolla.com>
  *
  * Partially based on polkit-qt-1 example code:
@@ -25,26 +25,15 @@
 #ifndef SAILFISH_POLKIT_AGENT_LISTENER_H
 #define SAILFISH_POLKIT_AGENT_LISTENER_H
 
-#include <QObject>
-#include <QString>
-
-#include <PolkitQt1/Identity>
-#include <PolkitQt1/Details>
 #include <PolkitQt1/Agent/Listener>
-#include <PolkitQt1/Agent/Session>
-
+#include "qobjectptr.h"
 #include "dialog.h"
-
 
 class SailfishPolKitAgentListener : public PolkitQt1::Agent::Listener
 {
     Q_OBJECT
-    Q_DISABLE_COPY(SailfishPolKitAgentListener)
-
 public:
-    SailfishPolKitAgentListener(QObject *parent = 0);
-    ~SailfishPolKitAgentListener();
-
+    explicit SailfishPolKitAgentListener(QObject *parent = 0);
 public Q_SLOTS:
     void initiateAuthentication(const QString &actionId,
                                 const QString &message,
@@ -52,13 +41,14 @@ public Q_SLOTS:
                                 const PolkitQt1::Details &details,
                                 const QString &cookie,
                                 const PolkitQt1::Identity::List &identities,
-                                PolkitQt1::Agent::AsyncResult *result);
+                                PolkitQt1::Agent::AsyncResult *result) override;
 
-    bool initiateAuthenticationFinish() { return true; }
-    void cancelAuthentication() {}
-
-private slots:
-    void onFinished(ConfirmationDialog *dialog);
+    bool initiateAuthenticationFinish() override;
+    void cancelAuthentication() override;
+private:
+    static QString userFromIdentity(ConfirmationDialog::Identity identity);
+    ConfirmationDialog::Identity getIdentity(const PolkitQt1::Identity::List &identities);
+    QObjectPtr<ConfirmationDialog> m_dialog;
 };
 
 #endif /* SAILFISH_POLKIT_AGENT_LISTENER_H */

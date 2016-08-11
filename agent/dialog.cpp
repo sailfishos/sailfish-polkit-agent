@@ -1,6 +1,6 @@
 /**
  * Sailfish polkit Agent: GUI Agent
- * Copyright (C) 2014 Jolla Ltd.
+ * Copyright (C) 2014-2016 Jolla Ltd.
  * Contact: Thomas Perl <thomas.perl@jolla.com>
  *
  * Partially based on polkit-qt-1 example code:
@@ -31,15 +31,13 @@
 #include <sailfishapp.h>
 
 
-ConfirmationDialog::ConfirmationDialog(const QString &action,
-        const QString &message, const QVariantMap &details,
-        const QString &cookie, const QString &identity,
-        PolkitQt1::Agent::AsyncResult *result)
-    : m_action(action)
+ConfirmationDialog::ConfirmationDialog(Identity identity, const QString &action,
+                                       const QString &message, const QVariantMap &details,
+                                       PolkitQt1::Agent::AsyncResult *result)
+    : m_identity(identity)
+    , m_action(action)
     , m_message(message)
     , m_details(details)
-    , m_cookie(cookie)
-    , m_identity(identity)
     , m_result(result)
     , m_got_confirmation(false)
     , m_approved(false)
@@ -63,6 +61,11 @@ ConfirmationDialog::~ConfirmationDialog()
     delete m_view;
 }
 
+ConfirmationDialog::Identity ConfirmationDialog::identity() const
+{
+    return m_identity;
+}
+
 void
 ConfirmationDialog::setConfirmationResult(bool approved)
 {
@@ -74,7 +77,7 @@ ConfirmationDialog::setConfirmationResult(bool approved)
     m_got_confirmation = true;
     m_approved = approved;
 
-    emit finished(this);
+    emit finished();
 }
 
 void
