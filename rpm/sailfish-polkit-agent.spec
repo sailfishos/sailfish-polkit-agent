@@ -68,7 +68,7 @@ systemctl-user daemon-reload || :
 # Agent application and QML
 %{_bindir}/%{name}
 %{_datadir}/mapplauncherd/privileges.d/*
-%{_datadir}/%{name}/qml/*.qml
+%{_datadir}/%{name}
 
 # D-Bus Daemon (helper, system bus)
 %{_libexecdir}/sailfish-polkit-daemon
