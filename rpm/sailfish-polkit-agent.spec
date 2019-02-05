@@ -8,7 +8,8 @@ Summary: Sailfish polkit Agent
 Group: Utilities
 License: LGPL
 Url: http://sailfishos.org/
-Source: %{name}-%{version}.tar.bz2
+Source0: %{name}-%{version}.tar.bz2
+Source1: %{name}.privileges
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5DBus)
 BuildRequires: pkgconfig(Qt5Quick)
@@ -35,6 +36,9 @@ make install INSTALL_ROOT=%{buildroot}
 # Install agent into post-user-session
 mkdir -p %{buildroot}%{_libdir}/systemd/user/post-user-session.target.wants
 ln -s ../%{name}.service %{buildroot}%{_libdir}/systemd/user/post-user-session.target.wants/
+
+mkdir -p %{buildroot}%{_datadir}/mapplauncherd/privileges.d
+install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
 
 %post
 # Ask running daemon to quit
@@ -63,7 +67,8 @@ systemctl-user daemon-reload || :
 %defattr(-,root,root,-)
 # Agent application and QML
 %{_bindir}/%{name}
-%{_datadir}/%{name}/qml/*.qml
+%{_datadir}/mapplauncherd/privileges.d/*
+%{_datadir}/%{name}
 
 # D-Bus Daemon (helper, system bus)
 %{_libexecdir}/sailfish-polkit-daemon
