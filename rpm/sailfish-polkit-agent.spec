@@ -5,9 +5,8 @@ Name: sailfish-polkit-agent
 Version: 1.0.2
 Release: 1
 Summary: Sailfish polkit Agent
-Group: Utilities
 License: LGPL
-Url: http://sailfishos.org/
+Url: https://github.com/sailfishos/sailfish-polkit-agent
 Source0: %{name}-%{version}.tar.bz2
 Source1: %{name}.privileges
 BuildRequires: pkgconfig(Qt5Core)
@@ -17,6 +16,7 @@ BuildRequires: pkgconfig(Qt5Qml)
 BuildRequires: pkgconfig(polkit-qt-agent-1)
 BuildRequires: pkgconfig(polkit-qt-core-1)
 BuildRequires: pkgconfig(sailfishapp) >= 0.0.10
+BuildRequires: systemd
 Requires: dbus
 Requires: procps
 
@@ -34,8 +34,8 @@ make %{?_smp_mflags}
 make install INSTALL_ROOT=%{buildroot}
 
 # Install agent into post-user-session
-mkdir -p %{buildroot}%{_libdir}/systemd/user/post-user-session.target.wants
-ln -s ../%{name}.service %{buildroot}%{_libdir}/systemd/user/post-user-session.target.wants/
+mkdir -p %{buildroot}%{_userunitdir}/post-user-session.target.wants
+ln -s ../%{name}.service %{buildroot}%{_userunitdir}/post-user-session.target.wants/
 
 mkdir -p %{buildroot}%{_datadir}/mapplauncherd/privileges.d
 install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
@@ -76,5 +76,5 @@ systemctl-user daemon-reload || :
 %{_sysconfdir}/dbus-1/system.d/%{dbus_service_name}.conf
 
 # Agent application as systemd user session service
-%{_libdir}/systemd/user/%{name}.service
-%{_libdir}/systemd/user/post-user-session.target.wants/%{name}.service
+%{_userunitdir}/%{name}.service
+%{_userunitdir}/post-user-session.target.wants/%{name}.service
