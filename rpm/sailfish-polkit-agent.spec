@@ -2,7 +2,7 @@
 %define dbus_service_path /org/sailfishos/polkit/daemon
 
 Name: sailfish-polkit-agent
-Version: 1.0.4
+Version: 1.0.5
 Release: 1
 Summary: Sailfish polkit Agent
 License: LGPL
