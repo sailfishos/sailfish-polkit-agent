@@ -16,7 +16,7 @@ BuildRequires: pkgconfig(Qt5Qml)
 BuildRequires: pkgconfig(polkit-qt-agent-1)
 BuildRequires: pkgconfig(polkit-qt-core-1)
 BuildRequires: pkgconfig(sailfishapp) >= 0.0.10
-BuildRequires: systemd
+BuildRequires: pkgconfig(systemd)
 Requires: dbus
 Requires: procps
 
